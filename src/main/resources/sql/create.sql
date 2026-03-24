@@ -50,8 +50,8 @@ CREATE TABLE reception (
 -- полка в комнате, вместимость полки
 CREATE TABLE place (
     id_place SERIAL PRIMARY KEY,
-    room_num INTEGER NOT NULL,
-    shelf_num INTEGER NOT NULL,
+    room_num INTEGER NOT NULL CHECK (room_num > 0),
+    shelf_num INTEGER NOT NULL CHECK (shelf_num > 0),
     kg_limit REAL NOT NULL CHECK (kg_limit > 0),
     CONSTRAINT unique_place UNIQUE (room_num, shelf_num)
 );

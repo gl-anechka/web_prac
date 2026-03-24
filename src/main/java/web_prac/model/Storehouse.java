@@ -39,7 +39,7 @@ public class Storehouse implements Common<Integer> {
     private LocalDateTime expiresAt;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "status", nullable = false)
+    @Column(name = "status", nullable = false, length = 20)
     private StoreStatus status = StoreStatus.OK;
 
     @ManyToOne(fetch = FetchType.LAZY)

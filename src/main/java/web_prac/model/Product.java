@@ -23,7 +23,7 @@ public class Product implements Common<Integer> {
     private ProductType productType;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "unit", nullable = false)
+    @Column(name = "unit", nullable = false, length = 10)
     private Unit unit;
 
     @PositiveOrZero

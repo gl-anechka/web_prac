@@ -23,9 +23,11 @@ public class Place implements Common<Integer> {
     @Column(name = "id_place")
     private Integer id;
 
+    @Positive
     @Column(name = "room_num", nullable = false)
     private Integer roomNum;
 
+    @Positive
     @Column(name = "shelf_num", nullable = false)
     private Integer shelfNum;
 

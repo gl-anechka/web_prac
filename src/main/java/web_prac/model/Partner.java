@@ -27,6 +27,6 @@ public class Partner implements Common<Integer> {
     private String email;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "type", nullable = false)
+    @Column(name = "type", nullable = false, length = 20)
     private PartnerType type = PartnerType.BOTH;
 }
