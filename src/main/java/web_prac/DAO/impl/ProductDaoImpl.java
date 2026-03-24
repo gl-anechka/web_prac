@@ -4,18 +4,18 @@ import jakarta.persistence.criteria.CriteriaBuilder;
 import jakarta.persistence.criteria.CriteriaQuery;
 import jakarta.persistence.criteria.Root;
 import jakarta.persistence.criteria.Subquery;
-import java.time.LocalDateTime;
-import java.util.List;
+import org.hibernate.Session;
 import org.springframework.stereotype.Repository;
-import org.springframework.transaction.annotation.Transactional;
 import web_prac.DAO.ProductDao;
 import web_prac.model.Product;
 import web_prac.model.StoreStatus;
 import web_prac.model.Storehouse;
 import web_prac.model.Supply;
 
+import java.time.LocalDateTime;
+import java.util.List;
+
 @Repository
-@Transactional
 public class ProductDaoImpl extends CommonDaoImpl<Product, Integer> implements ProductDao {
 
     public ProductDaoImpl() {
@@ -24,77 +24,85 @@ public class ProductDaoImpl extends CommonDaoImpl<Product, Integer> implements P
 
     @Override
     public List<Product> findByType(Integer typeId) {
-        CriteriaBuilder builder = currentSession().getCriteriaBuilder();
-        CriteriaQuery<Product> query = builder.createQuery(Product.class);
-        Root<Product> product = query.from(Product.class);
+        try (Session session = sessionFactory.openSession()) {
+            CriteriaBuilder builder = session.getCriteriaBuilder();
+            CriteriaQuery<Product> query = builder.createQuery(Product.class);
+            Root<Product> product = query.from(Product.class);
 
-        query.select(product)
-                .where(builder.equal(product.get("productType").get("id"), typeId))
-                .orderBy(builder.asc(product.get("title")));
+            query.select(product)
+                    .where(builder.equal(product.get("productType").get("id"), typeId))
+                    .orderBy(builder.asc(product.get("title")));
 
-        return currentSession().createQuery(query).getResultList();
+            return session.createQuery(query).getResultList();
+        }
     }
 
     @Override
     public List<Product> findByProvider(Integer partnerId) {
-        CriteriaBuilder builder = currentSession().getCriteriaBuilder();
-        CriteriaQuery<Product> query = builder.createQuery(Product.class);
-        Root<Product> product = query.from(Product.class);
+        try (Session session = sessionFactory.openSession()) {
+            CriteriaBuilder builder = session.getCriteriaBuilder();
+            CriteriaQuery<Product> query = builder.createQuery(Product.class);
+            Root<Product> product = query.from(Product.class);
 
-        Subquery<Integer> subquery = query.subquery(Integer.class);
-        Root<Supply> supply = subquery.from(Supply.class);
+            Subquery<Integer> subquery = query.subquery(Integer.class);
+            Root<Supply> supply = subquery.from(Supply.class);
 
-        subquery.select(builder.literal(1))
-                .where(
-                        builder.and(
-                                builder.equal(supply.get("product").get("id"), product.get("id")),
-                                builder.equal(supply.get("provider").get("id"), partnerId)
-                        )
-                );
+            subquery.select(builder.literal(1))
+                    .where(
+                            builder.and(
+                                    builder.equal(supply.get("product").get("id"), product.get("id")),
+                                    builder.equal(supply.get("provider").get("id"), partnerId)
+                            )
+                    );
 
-        query.select(product)
-                .distinct(true)
-                .where(builder.exists(subquery))
-                .orderBy(builder.asc(product.get("title")));
+            query.select(product)
+                    .distinct(true)
+                    .where(builder.exists(subquery))
+                    .orderBy(builder.asc(product.get("title")));
 
-        return currentSession().createQuery(query).getResultList();
+            return session.createQuery(query).getResultList();
+        }
     }
 
     @Override
     public List<Product> findExpiringBefore(LocalDateTime threshold) {
-        CriteriaBuilder builder = currentSession().getCriteriaBuilder();
-        CriteriaQuery<Product> query = builder.createQuery(Product.class);
-        Root<Storehouse> entry = query.from(Storehouse.class);
+        try (Session session = sessionFactory.openSession()) {
+            CriteriaBuilder builder = session.getCriteriaBuilder();
+            CriteriaQuery<Product> query = builder.createQuery(Product.class);
+            Root<Storehouse> entry = query.from(Storehouse.class);
 
-        query.select(entry.get("product"))
-                .distinct(true)
-                .where(
-                        builder.and(
-                                builder.isNotNull(entry.get("expiresAt")),
-                                builder.lessThanOrEqualTo(entry.get("expiresAt"), threshold),
-                                builder.notEqual(entry.get("status"), StoreStatus.SPOILED)
-                        )
-                )
-                .orderBy(builder.asc(entry.get("product").get("title")));
+            query.select(entry.get("product"))
+                    .distinct(true)
+                    .where(
+                            builder.and(
+                                    builder.isNotNull(entry.get("expiresAt")),
+                                    builder.lessThanOrEqualTo(entry.get("expiresAt"), threshold),
+                                    builder.notEqual(entry.get("status"), StoreStatus.SPOILED)
+                            )
+                    )
+                    .orderBy(builder.asc(entry.get("product").get("title")));
 
-        return currentSession().createQuery(query).getResultList();
+            return session.createQuery(query).getResultList();
+        }
     }
 
     @Override
     public double getAvailableAmount(Integer productId) {
-        CriteriaBuilder builder = currentSession().getCriteriaBuilder();
-        CriteriaQuery<Double> query = builder.createQuery(Double.class);
-        Root<Storehouse> entry = query.from(Storehouse.class);
+        try (Session session = sessionFactory.openSession()) {
+            CriteriaBuilder builder = session.getCriteriaBuilder();
+            CriteriaQuery<Double> query = builder.createQuery(Double.class);
+            Root<Storehouse> entry = query.from(Storehouse.class);
 
-        query.select(builder.sum(entry.<Double>get("amount")))
-                .where(
-                        builder.and(
-                                builder.equal(entry.get("product").get("id"), productId),
-                                builder.notEqual(entry.get("status"), StoreStatus.SPOILED)
-                        )
-                );
+            query.select(builder.sum(entry.<Double>get("amount")))
+                    .where(
+                            builder.and(
+                                    builder.equal(entry.get("product").get("id"), productId),
+                                    builder.notEqual(entry.get("status"), StoreStatus.SPOILED)
+                            )
+                    );
 
-        Double amount = currentSession().createQuery(query).getSingleResult();
-        return amount == null ? 0.0 : amount;
+            Double amount = session.createQuery(query).getSingleResult();
+            return amount == null ? 0.0 : amount;
+        }
     }
 }
