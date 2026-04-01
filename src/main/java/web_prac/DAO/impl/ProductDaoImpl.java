@@ -64,7 +64,7 @@ public class ProductDaoImpl extends CommonDaoImpl<Product, Integer> implements P
         subquery.select(builder.literal(1))
                 .where(builder.and(
                         builder.equal(storehouse.get("product").get("id"), product.get("id")),
-                        builder.equal(storehouse.get("place"), placeId)),
+                        builder.equal(storehouse.get("place").get("id"), placeId)),
                         builder.greaterThan(storehouse.<Double>get("amount"), 0.0)
                 );
 
@@ -130,6 +130,7 @@ public class ProductDaoImpl extends CommonDaoImpl<Product, Integer> implements P
                             builder.and(
                                     builder.isNotNull(entry.get("expiresAt")),
                                     builder.lessThanOrEqualTo(entry.get("expiresAt"), threshold),
+                                    builder.greaterThan(entry.<Double>get("amount"), 0.0),
                                     builder.notEqual(entry.get("status"), StoreStatus.SPOILED)
                             )
                     )
@@ -196,6 +197,7 @@ public class ProductDaoImpl extends CommonDaoImpl<Product, Integer> implements P
                     .where(
                             builder.and(
                                     builder.equal(entry.get("product").get("id"), productId),
+                                    builder.greaterThan(entry.<Double>get("amount"), 0.0),
                                     builder.notEqual(entry.get("status"), StoreStatus.SPOILED)
                             )
                     );

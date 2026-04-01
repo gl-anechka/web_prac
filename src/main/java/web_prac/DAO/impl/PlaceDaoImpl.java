@@ -58,7 +58,8 @@ public class PlaceDaoImpl extends CommonDaoImpl<Place, Integer> implements Place
 
     @Override
     public double getFreeCapacity(Integer placeId) {
-        try (Session session = sessionFactory.openSession()) {
+        Session session = sessionFactory.openSession();
+        try {
             Place place = session.find(Place.class, placeId);
             if (place == null) {
                 return 0.0;
@@ -66,6 +67,8 @@ public class PlaceDaoImpl extends CommonDaoImpl<Place, Integer> implements Place
 
             Double usedWeight = getUsedWeight(session, placeId);
             return place.getKgLimit() - (usedWeight == null ? 0.0 : usedWeight);
+        } finally {
+            session.close();
         }
     }
 
@@ -80,7 +83,8 @@ public class PlaceDaoImpl extends CommonDaoImpl<Place, Integer> implements Place
             return null;
         }
 
-        try (Session session = sessionFactory.openSession()) {
+        Session session = sessionFactory.openSession();
+        try {
             Product product = session.find(Product.class, productId);
             if (product == null) {
                 return null;
@@ -89,6 +93,8 @@ public class PlaceDaoImpl extends CommonDaoImpl<Place, Integer> implements Place
             double requiredWeight = product.getKgPerUnit() * amount;
             List<Place> suitablePlaces = searchPlaces(null, null, requiredWeight);
             return suitablePlaces.isEmpty() ? null : suitablePlaces.get(0);
+        } finally {
+            session.close();
         }
     }
 

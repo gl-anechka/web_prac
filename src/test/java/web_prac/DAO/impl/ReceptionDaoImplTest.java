@@ -1,6 +1,9 @@
 package web_prac.DAO.impl;
 
 import org.junit.jupiter.api.Test;
+import org.hibernate.Session;
+import org.hibernate.SessionFactory;
+import org.hibernate.Transaction;
 import org.springframework.beans.factory.annotation.Autowired;
 import web_prac.DAO.ReceptionDao;
 import web_prac.model.Reception;
@@ -9,6 +12,9 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 class ReceptionDaoImplTest extends DaoTestSupport {
 
@@ -106,6 +112,28 @@ class ReceptionDaoImplTest extends DaoTestSupport {
     }
 
     @Test
+    void findByPeriodWithOnlyFromWorks() {
+        List<Reception> receptions = receptionDao.findByPeriod(LocalDateTime.of(2026, 2, 11, 0, 0), null);
+
+        assertEquals(3, receptions.size());
+        assertTrue(receptions.stream().allMatch(reception -> !reception.getTime().isBefore(LocalDateTime.of(2026, 2, 11, 0, 0))));
+    }
+
+    @Test
+    void findByPeriodWithOnlyToWorks() {
+        List<Reception> receptions =
+                receptionDao.findByPeriod(null, LocalDateTime.of(2026, 2, 9, 23, 59));
+
+        assertEquals(2, receptions.size());
+        assertEquals(List.of(3, 2), receptions.stream().map(Reception::getId).toList());
+    }
+
+    @Test
+    void findByPeriodWithoutBoundsReturnsAll() {
+        assertEquals(5, receptionDao.findByPeriod(null, null).size());
+    }
+
+    @Test
     void findByCompletedReturnsMatchingStatus() {
         List<Reception> receptions = receptionDao.findByCompleted(false);
 
@@ -119,5 +147,35 @@ class ReceptionDaoImplTest extends DaoTestSupport {
 
         assertNotNull(updated);
         assertTrue(receptionDao.getById(4).getCompleted());
+    }
+
+    @Test
+    void setCompletedTreatsNullAsFalse() {
+        Reception updated = receptionDao.setCompleted(1, null);
+
+        assertNotNull(updated);
+        assertFalse(receptionDao.getById(1).getCompleted());
+    }
+
+    @Test
+    void setCompletedReturnsNullWhenReceptionDoesNotExist() {
+        assertNull(receptionDao.setCompleted(999, true));
+    }
+
+    @Test
+    void setCompletedRollsBackWhenFindFails() {
+        ReceptionDaoImpl dao = new ReceptionDaoImpl();
+        SessionFactory sessionFactory = mock(SessionFactory.class);
+        Session session = mock(Session.class);
+        Transaction transaction = mock(Transaction.class);
+
+        dao.sessionFactory = sessionFactory;
+
+        when(sessionFactory.openSession()).thenReturn(session);
+        when(session.getTransaction()).thenReturn(transaction);
+        when(session.find(Reception.class, 1)).thenThrow(new RuntimeException("find failed"));
+
+        assertThrows(RuntimeException.class, () -> dao.setCompleted(1, true));
+        verify(transaction).rollback();
     }
 }

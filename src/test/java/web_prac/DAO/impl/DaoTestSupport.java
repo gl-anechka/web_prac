@@ -3,7 +3,9 @@ package web_prac.DAO.impl;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import org.junit.jupiter.api.TestInstance;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.context.jdbc.SqlConfig;
 import web_prac.model.Partner;
@@ -30,6 +32,9 @@ abstract class DaoTestSupport {
     @PersistenceContext
     protected EntityManager entityManager;
 
+    @Autowired
+    protected JdbcTemplate jdbcTemplate;
+
     protected ProductType productType(int id) {
         return entityManager.find(ProductType.class, id);
     }
@@ -52,5 +57,10 @@ abstract class DaoTestSupport {
 
     protected Reception reception(int id) {
         return entityManager.find(Reception.class, id);
+    }
+
+    protected void executeUpdate(String sql) {
+        jdbcTemplate.execute(sql);
+        entityManager.clear();
     }
 }

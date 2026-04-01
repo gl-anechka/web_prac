@@ -10,6 +10,8 @@ import web_prac.model.Unit;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -116,10 +118,65 @@ class ProductDaoImplTest extends DaoTestSupport {
     }
 
     @Test
+    void searchProductFiltersByPlaceOnly() {
+        List<Product> products = productDao.searchProduct(null, null, null, null, null, 4);
+
+        assertEquals(
+                Set.of(1, 2),
+                products.stream().map(Product::getId).collect(Collectors.toSet())
+        );
+    }
+
+    @Test
+    void searchProductIgnoresBlankTitle() {
+        List<Product> products = productDao.searchProduct("   ", null, null, null, null, null);
+
+        assertEquals(7, products.size());
+    }
+
+    @Test
+    void searchProductFiltersByTitle() {
+        List<Product> products = productDao.searchProduct("чайник", null, null, null, null, null);
+
+        assertEquals(1, products.size());
+        assertEquals(7, products.get(0).getId());
+    }
+
+    @Test
+    void searchProductFiltersByProviderOnly() {
+        List<Product> products = productDao.searchProduct(null, null, 2, null, null, null);
+
+        assertEquals(2, products.size());
+        assertEquals(List.of(4, 5), products.stream().map(Product::getId).toList());
+    }
+
+    @Test
+    void searchProductDoesNotRestrictWhenInStockOnlyIsFalse() {
+        List<Product> products = productDao.searchProduct(null, null, null, false, null, null);
+
+        assertEquals(7, products.size());
+    }
+
+    @Test
     void getAvailableAmountSumsOnlyNonSpoiledStock() {
         double amount = productDao.getAvailableAmount(1);
 
         assertEquals(40.0, amount);
+    }
+
+    @Test
+    void getAvailableAmountIgnoresZeroAmountEntries() {
+        executeUpdate("""
+                INSERT INTO storehouse (id_product, amount, id_place, id_supply, received_at, expires_at, status, id_reception)
+                VALUES (1, 0, 1, 1, '2026-02-12 10:00:00', '2026-02-17 00:00:00', 'OK', NULL)
+                """);
+
+        assertEquals(40.0, productDao.getAvailableAmount(1));
+    }
+
+    @Test
+    void getAvailableAmountReturnsZeroForUnknownProduct() {
+        assertEquals(0.0, productDao.getAvailableAmount(999));
     }
 
     @Test
@@ -134,6 +191,16 @@ class ProductDaoImplTest extends DaoTestSupport {
         assertEquals(4, stats.size());
         assertEquals(3L, stats.values().stream().mapToLong(Long::longValue).max().orElseThrow());
         assertEquals(7L, stats.values().stream().mapToLong(Long::longValue).sum());
+    }
+
+    @Test
+    void countByTypeReturnsEmptyMapWhenThereAreNoProducts() {
+        executeUpdate("DELETE FROM storehouse");
+        executeUpdate("DELETE FROM reception");
+        executeUpdate("DELETE FROM supply");
+        executeUpdate("DELETE FROM product");
+
+        assertTrue(productDao.countByType().isEmpty());
     }
 
     private Product newProduct(String title) {

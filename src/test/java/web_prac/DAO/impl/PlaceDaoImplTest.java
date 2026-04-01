@@ -74,6 +74,25 @@ class PlaceDaoImplTest extends DaoTestSupport {
     }
 
     @Test
+    void searchPlacesReturnsAllWhenNoFilters() {
+        assertEquals(5, placeDao.searchPlaces(null, null, null).size());
+    }
+
+    @Test
+    void searchPlacesFiltersByRoomOnly() {
+        List<Place> places = placeDao.searchPlaces(1, null, null);
+
+        assertEquals(List.of(1, 2, 3), places.stream().map(Place::getId).toList());
+    }
+
+    @Test
+    void searchPlacesFiltersByShelfOnly() {
+        List<Place> places = placeDao.searchPlaces(null, 2, null);
+
+        assertEquals(List.of(2, 5), places.stream().map(Place::getId).toList());
+    }
+
+    @Test
     void searchPlacesFiltersByFreeCapacity() {
         List<Place> places = placeDao.searchPlaces(null, null, 100.0);
 
@@ -87,9 +106,44 @@ class PlaceDaoImplTest extends DaoTestSupport {
     }
 
     @Test
+    void getFreeCapacityReturnsFullLimitWhenPlaceIsEmpty() {
+        assertEquals(150.0, placeDao.getFreeCapacity(2));
+    }
+
+    @Test
+    void getFreeCapacityReturnsZeroForUnknownPlace() {
+        assertEquals(0.0, placeDao.getFreeCapacity(999));
+    }
+
+    @Test
     void hasPlaceForProductChecksCapacity() {
         assertTrue(placeDao.hasPlaceForProduct(7, 60.0));
         assertFalse(placeDao.hasPlaceForProduct(7, 200.0));
+    }
+
+    @Test
+    void findFirstSuitablePlaceReturnsNullForNullProductId() {
+        assertNull(placeDao.findFirstSuitablePlace(null, 1.0));
+    }
+
+    @Test
+    void findFirstSuitablePlaceReturnsNullForNullAmount() {
+        assertNull(placeDao.findFirstSuitablePlace(1, null));
+    }
+
+    @Test
+    void findFirstSuitablePlaceReturnsNullForNonPositiveAmount() {
+        assertNull(placeDao.findFirstSuitablePlace(1, 0.0));
+    }
+
+    @Test
+    void findFirstSuitablePlaceReturnsNullForUnknownProduct() {
+        assertNull(placeDao.findFirstSuitablePlace(999, 1.0));
+    }
+
+    @Test
+    void findFirstSuitablePlaceReturnsNullWhenNoPlaceFits() {
+        assertNull(placeDao.findFirstSuitablePlace(7, 200.0));
     }
 
     @Test

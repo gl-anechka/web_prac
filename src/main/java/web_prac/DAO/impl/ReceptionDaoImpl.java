@@ -90,7 +90,8 @@ public class ReceptionDaoImpl extends CommonDaoImpl<Reception, Integer> implemen
 
     @Override
     public Reception setCompleted(Integer receptionId, Boolean completed) {
-        try (Session session = sessionFactory.openSession()) {
+        Session session = sessionFactory.openSession();
+        try {
             session.beginTransaction();
             try {
                 Reception reception = session.find(Reception.class, receptionId);
@@ -106,6 +107,8 @@ public class ReceptionDaoImpl extends CommonDaoImpl<Reception, Integer> implemen
                 session.getTransaction().rollback();
                 throw e;
             }
+        } finally {
+            session.close();
         }
     }
 }

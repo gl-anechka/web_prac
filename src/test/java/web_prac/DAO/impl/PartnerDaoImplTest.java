@@ -87,4 +87,33 @@ class PartnerDaoImplTest extends DaoTestSupport {
         assertEquals(1, partners.size());
         assertEquals(6, partners.get(0).getId());
     }
+
+    @Test
+    void searchPartnersFiltersConsumersIncludingBoth() {
+        List<Partner> partners = partnerDao.searchPartners(
+                PartnerType.CONSUMER,
+                null,
+                "обед",
+                null,
+                null
+        );
+
+        assertEquals(1, partners.size());
+        assertEquals(5, partners.get(0).getId());
+    }
+
+    @Test
+    void searchPartnersReturnsOnlyBothWhenRequested() {
+        List<Partner> partners = partnerDao.searchPartners(PartnerType.BOTH, null, null, null, null);
+
+        assertEquals(1, partners.size());
+        assertEquals(6, partners.get(0).getId());
+    }
+
+    @Test
+    void searchPartnersIgnoresBlankFieldsAndNullType() {
+        List<Partner> partners = partnerDao.searchPartners(null, "   ", "   ", "   ", "   ");
+
+        assertEquals(6, partners.size());
+    }
 }

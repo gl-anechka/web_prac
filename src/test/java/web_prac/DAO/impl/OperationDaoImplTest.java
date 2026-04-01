@@ -43,6 +43,21 @@ class OperationDaoImplTest extends DaoTestSupport {
     }
 
     @Test
+    void findByFilterAppliesAllSupplyFilters() {
+        List<OperationView> operations = operationDao.findByFilter(
+                OperationKind.SUPPLY,
+                LocalDateTime.of(2026, 2, 1, 0, 0),
+                LocalDateTime.of(2026, 2, 10, 23, 59),
+                1,
+                3
+        );
+
+        assertEquals(1, operations.size());
+        assertEquals(OperationKind.SUPPLY, operations.get(0).getKind());
+        assertEquals(3, operations.get(0).getOperationId());
+    }
+
+    @Test
     void findByFilterAppliesDateAndProductFilters() {
         List<OperationView> operations = operationDao.findByFilter(
                 OperationKind.RECEPTION,
@@ -59,6 +74,34 @@ class OperationDaoImplTest extends DaoTestSupport {
     }
 
     @Test
+    void findByFilterAppliesReceptionPartnerFilter() {
+        List<OperationView> operations = operationDao.findByFilter(
+                OperationKind.RECEPTION,
+                null,
+                null,
+                4,
+                null
+        );
+
+        assertEquals(2, operations.size());
+        assertTrue(operations.stream().allMatch(operation -> operation.getKind() == OperationKind.RECEPTION));
+        assertTrue(operations.stream().allMatch(operation -> operation.getPartnerId().equals(4)));
+    }
+
+    @Test
+    void findByFilterCanReturnEmptyList() {
+        List<OperationView> operations = operationDao.findByFilter(
+                OperationKind.RECEPTION,
+                null,
+                null,
+                1,
+                7
+        );
+
+        assertTrue(operations.isEmpty());
+    }
+
+    @Test
     void findRecentReturnsLimitedSlice() {
         List<OperationView> operations = operationDao.findRecent(3);
 
@@ -66,5 +109,15 @@ class OperationDaoImplTest extends DaoTestSupport {
         assertEquals(4, operations.get(0).getOperationId());
         assertEquals(5, operations.get(1).getOperationId());
         assertEquals(1, operations.get(2).getOperationId());
+    }
+
+    @Test
+    void findRecentReturnsAllWhenLimitIsNonPositive() {
+        assertEquals(11, operationDao.findRecent(0).size());
+    }
+
+    @Test
+    void findRecentReturnsAllWhenLimitExceedsCollectionSize() {
+        assertEquals(11, operationDao.findRecent(50).size());
     }
 }

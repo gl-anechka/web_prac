@@ -102,4 +102,25 @@ class SupplyDaoImplTest extends DaoTestSupport {
 
         assertEquals(3, supplies.size());
     }
+
+    @Test
+    void findByPeriodWithOnlyFromWorks() {
+        List<Supply> supplies = supplyDao.findByPeriod(LocalDateTime.of(2026, 2, 5, 0, 0), null);
+
+        assertEquals(3, supplies.size());
+        assertTrue(supplies.stream().allMatch(supply -> !supply.getTime().isBefore(LocalDateTime.of(2026, 2, 5, 0, 0))));
+    }
+
+    @Test
+    void findByPeriodWithOnlyToWorks() {
+        List<Supply> supplies = supplyDao.findByPeriod(null, LocalDateTime.of(2026, 2, 1, 10, 30));
+
+        assertEquals(2, supplies.size());
+        assertEquals(List.of(2, 4), supplies.stream().map(Supply::getId).toList());
+    }
+
+    @Test
+    void findByPeriodWithoutBoundsReturnsAll() {
+        assertEquals(6, supplyDao.findByPeriod(null, null).size());
+    }
 }
