@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="ru" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title th:text="${pageTitle}">Форма товара</title>
+    <link rel="stylesheet" th:href="@{/css/app.css}">
+</head>
+<body>
+
+<div th:replace="~{fragments/common :: header('products')}"></div>
+<div th:replace="~{fragments/common :: messages}"></div>
+
+<main class="container">
+    <div class="page-header">
+        <h1 th:text="${pageTitle}">Форма товара</h1>
+    </div>
+
+    <form th:action="@{/products/save}"
+          th:object="${productForm}"
+          method="post"
+          class="card form-grid">
+
+        <input type="hidden" th:field="*{id}">
+
+        <label>
+            Наименование
+            <input type="text" th:field="*{title}">
+            <span class="field-error" th:errors="*{title}"></span>
+        </label>
+
+        <label>
+            Вид товара
+            <select th:field="*{productTypeId}">
+                <option value="">Выберите вид</option>
+
+                <option th:each="typeItem : ${productTypesList}"
+                        th:value="${typeItem.id}"
+                        th:text="${typeItem.title}">
+                </option>
+            </select>
+
+            <span class="field-error" th:errors="*{productTypeId}"></span>
+        </label>
+
+        <label>
+            Единица измерения
+            <select th:field="*{unit}">
+                <option value="">Выберите единицу</option>
+
+                <option th:each="unitItem : ${units}"
+                        th:value="${unitItem}"
+                        th:text="${unitItem}">
+                </option>
+            </select>
+
+            <span class="field-error" th:errors="*{unit}"></span>
+        </label>
+
+        <label>
+            Вес одной единицы, кг
+            <input type="number"
+                   step="0.01"
+                   min="0"
+                   th:field="*{kgPerUnit}">
+
+            <span class="field-error" th:errors="*{kgPerUnit}"></span>
+        </label>
+
+        <div class="form-actions">
+            <button class="button primary" type="submit">
+                Сохранить
+            </button>
+
+            <a class="button" th:href="@{/products}">
+                Отмена
+            </a>
+        </div>
+    </form>
+</main>
+
+</body>
+</html>

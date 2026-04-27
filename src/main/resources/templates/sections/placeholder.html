@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="ru" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title th:text="${pageTitle}">Раздел</title>
+    <link rel="stylesheet" th:href="@{/css/app.css}">
+</head>
+<body>
+
+<div th:replace="~{fragments/common :: header(${activeSection})}"></div>
+<div th:replace="~{fragments/common :: messages}"></div>
+
+<main class="container">
+    <section class="page-header">
+        <h1 th:text="${pageTitle}">Раздел</h1>
+    </section>
+
+    <section class="card placeholder-card">
+        <p class="placeholder-lead" th:text="${lead}">Раздел еще не реализован.</p>
+        <p class="placeholder-text" th:text="${details}">Подробности.</p>
+        <a class="button primary" th:href="@{/}">Вернуться на главную</a>
+    </section>
+</main>
+
+</body>
+</html>

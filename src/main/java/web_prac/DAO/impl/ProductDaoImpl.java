@@ -1,10 +1,20 @@
 package web_prac.DAO.impl;
 
-import jakarta.persistence.criteria.*;
+import jakarta.persistence.criteria.CriteriaBuilder;
+import jakarta.persistence.criteria.CriteriaQuery;
+import jakarta.persistence.criteria.Join;
+import jakarta.persistence.criteria.Predicate;
+import jakarta.persistence.criteria.Root;
+import jakarta.persistence.criteria.Subquery;
+import org.hibernate.Hibernate;
 import org.hibernate.Session;
 import org.springframework.stereotype.Repository;
 import web_prac.DAO.ProductDao;
-import web_prac.model.*;
+import web_prac.model.Product;
+import web_prac.model.ProductType;
+import web_prac.model.StoreStatus;
+import web_prac.model.Storehouse;
+import web_prac.model.Supply;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -14,62 +24,6 @@ import java.util.Map;
 
 @Repository
 public class ProductDaoImpl extends CommonDaoImpl<Product, Integer> implements ProductDao {
-    private Predicate existsSupplyFromProvider(CriteriaQuery<?> query, CriteriaBuilder builder, Root<Product> product, Integer providerId) {
-        Subquery<Integer> subquery = query.subquery(Integer.class);
-        Root<Supply> supply = subquery.from(Supply.class);
-
-        subquery.select(builder.literal(1))
-                .where(builder.and(
-                        builder.equal(supply.get("product").get("id"), product.get("id")),
-                        builder.equal(supply.get("provider").get("id"), providerId)
-                        )
-                );
-
-        return builder.exists(subquery);
-    }
-
-    private Predicate existsAvailableStock(CriteriaQuery<?> query, CriteriaBuilder builder, Root<Product> product) {
-        Subquery<Integer> subquery = query.subquery(Integer.class);
-        Root<Storehouse> storehouse = subquery.from(Storehouse.class);
-
-        subquery.select(builder.literal(1))
-                .where(builder.and(
-                        builder.equal(storehouse.get("product").get("id"), product.get("id")),
-                        builder.greaterThan(storehouse.<Double>get("amount"), 0.0),
-                        builder.notEqual(storehouse.get("status"), StoreStatus.SPOILED)
-                        )
-                );
-
-        return builder.exists(subquery);
-    }
-
-    private Predicate existsStorehouseEntryWithStatus(CriteriaQuery<?> query, CriteriaBuilder builder, Root<Product> product, StoreStatus status) {
-        Subquery<Integer> subquery = query.subquery(Integer.class);
-        Root<Storehouse> storehouse = subquery.from(Storehouse.class);
-
-        subquery.select(builder.literal(1))
-                .where(builder.and(
-                        builder.equal(storehouse.get("product").get("id"), product.get("id")),
-                        builder.equal(storehouse.get("status"), status)),
-                        builder.greaterThan(storehouse.<Double>get("amount"), 0.0)
-                );
-
-        return builder.exists(subquery);
-    }
-
-    private Predicate existsStorehouseEntryAtPlace(CriteriaQuery<?> query, CriteriaBuilder builder, Root<Product> product, Integer placeId) {
-        Subquery<Integer> subquery = query.subquery(Integer.class);
-        Root<Storehouse> storehouse = subquery.from(Storehouse.class);
-
-        subquery.select(builder.literal(1))
-                .where(builder.and(
-                        builder.equal(storehouse.get("product").get("id"), product.get("id")),
-                        builder.equal(storehouse.get("place").get("id"), placeId)),
-                        builder.greaterThan(storehouse.<Double>get("amount"), 0.0)
-                );
-
-        return builder.exists(subquery);
-    }
 
     public ProductDaoImpl() {
         super(Product.class);
@@ -86,7 +40,7 @@ public class ProductDaoImpl extends CommonDaoImpl<Product, Integer> implements P
                     .where(builder.equal(product.get("productType").get("id"), typeId))
                     .orderBy(builder.asc(product.get("title")));
 
-            return session.createQuery(query).getResultList();
+            return initializeProductTypes(session.createQuery(query).getResultList());
         }
     }
 
@@ -113,7 +67,7 @@ public class ProductDaoImpl extends CommonDaoImpl<Product, Integer> implements P
                     .where(builder.exists(subquery))
                     .orderBy(builder.asc(product.get("title")));
 
-            return session.createQuery(query).getResultList();
+            return initializeProductTypes(session.createQuery(query).getResultList());
         }
     }
 
@@ -136,12 +90,19 @@ public class ProductDaoImpl extends CommonDaoImpl<Product, Integer> implements P
                     )
                     .orderBy(builder.asc(entry.get("product").get("title")));
 
-            return session.createQuery(query).getResultList();
+            return initializeProductTypes(session.createQuery(query).getResultList());
         }
     }
 
     @Override
-    public List<Product> searchProduct(String title, Integer typeId, Integer providerId, Boolean inStockOnly, StoreStatus status, Integer placeId) {
+    public List<Product> searchProduct(
+            String title,
+            Integer typeId,
+            Integer providerId,
+            Boolean inStockOnly,
+            StoreStatus status,
+            Integer placeId
+    ) {
         try (Session session = sessionFactory.openSession()) {
             CriteriaBuilder builder = session.getCriteriaBuilder();
             CriteriaQuery<Product> query = builder.createQuery(Product.class);
@@ -150,10 +111,10 @@ public class ProductDaoImpl extends CommonDaoImpl<Product, Integer> implements P
 
             if (title != null && !title.isBlank()) {
                 predicates.add(
-                    builder.like(
-                        builder.lower(product.get("title")),
-                        "%" + title.trim().toLowerCase() + "%"
-                    )
+                        builder.like(
+                                builder.lower(product.get("title")),
+                                "%" + title.trim().toLowerCase() + "%"
+                        )
                 );
             }
 
@@ -182,7 +143,7 @@ public class ProductDaoImpl extends CommonDaoImpl<Product, Integer> implements P
                     .where(predicates.toArray(Predicate[]::new))
                     .orderBy(builder.asc(product.get("title")));
 
-            return session.createQuery(query).getResultList();
+            return initializeProductTypes(session.createQuery(query).getResultList());
         }
     }
 
@@ -228,10 +189,7 @@ public class ProductDaoImpl extends CommonDaoImpl<Product, Integer> implements P
             Root<Product> product = query.from(Product.class);
             Join<Product, ProductType> type = product.join("productType");
 
-            query.select(builder.array(
-                            type.get("title"),
-                            builder.count(product)
-                    ))
+            query.select(builder.array(type.get("title"), builder.count(product)))
                     .groupBy(type.get("id"), type.get("title"))
                     .orderBy(builder.asc(type.get("title")));
 
@@ -243,5 +201,94 @@ public class ProductDaoImpl extends CommonDaoImpl<Product, Integer> implements P
             }
             return stat;
         }
+    }
+
+    private Predicate existsSupplyFromProvider(
+            CriteriaQuery<?> query,
+            CriteriaBuilder builder,
+            Root<Product> product,
+            Integer providerId
+    ) {
+        Subquery<Integer> subquery = query.subquery(Integer.class);
+        Root<Supply> supply = subquery.from(Supply.class);
+
+        subquery.select(builder.literal(1))
+                .where(
+                        builder.and(
+                                builder.equal(supply.get("product").get("id"), product.get("id")),
+                                builder.equal(supply.get("provider").get("id"), providerId)
+                        )
+                );
+
+        return builder.exists(subquery);
+    }
+
+    private Predicate existsAvailableStock(
+            CriteriaQuery<?> query,
+            CriteriaBuilder builder,
+            Root<Product> product
+    ) {
+        Subquery<Integer> subquery = query.subquery(Integer.class);
+        Root<Storehouse> storehouse = subquery.from(Storehouse.class);
+
+        subquery.select(builder.literal(1))
+                .where(
+                        builder.and(
+                                builder.equal(storehouse.get("product").get("id"), product.get("id")),
+                                builder.greaterThan(storehouse.<Double>get("amount"), 0.0),
+                                builder.notEqual(storehouse.get("status"), StoreStatus.SPOILED)
+                        )
+                );
+
+        return builder.exists(subquery);
+    }
+
+    private Predicate existsStorehouseEntryWithStatus(
+            CriteriaQuery<?> query,
+            CriteriaBuilder builder,
+            Root<Product> product,
+            StoreStatus status
+    ) {
+        Subquery<Integer> subquery = query.subquery(Integer.class);
+        Root<Storehouse> storehouse = subquery.from(Storehouse.class);
+
+        subquery.select(builder.literal(1))
+                .where(
+                        builder.and(
+                                builder.equal(storehouse.get("product").get("id"), product.get("id")),
+                                builder.equal(storehouse.get("status"), status)
+                        ),
+                        builder.greaterThan(storehouse.<Double>get("amount"), 0.0)
+                );
+
+        return builder.exists(subquery);
+    }
+
+    private Predicate existsStorehouseEntryAtPlace(
+            CriteriaQuery<?> query,
+            CriteriaBuilder builder,
+            Root<Product> product,
+            Integer placeId
+    ) {
+        Subquery<Integer> subquery = query.subquery(Integer.class);
+        Root<Storehouse> storehouse = subquery.from(Storehouse.class);
+
+        subquery.select(builder.literal(1))
+                .where(
+                        builder.and(
+                                builder.equal(storehouse.get("product").get("id"), product.get("id")),
+                                builder.equal(storehouse.get("place").get("id"), placeId)
+                        ),
+                        builder.greaterThan(storehouse.<Double>get("amount"), 0.0)
+                );
+
+        return builder.exists(subquery);
+    }
+
+    private List<Product> initializeProductTypes(List<Product> products) {
+        for (Product product : products) {
+            Hibernate.initialize(product.getProductType());
+        }
+        return products;
     }
 }

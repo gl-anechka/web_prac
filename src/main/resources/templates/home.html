@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="ru" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Главная</title>
+    <link rel="stylesheet" th:href="@{/css/app.css}">
+</head>
+<body>
+
+<div th:replace="~{fragments/common :: header('home')}"></div>
+<div th:replace="~{fragments/common :: messages}"></div>
+
+<main class="container home-layout">
+    <section class="hero card">
+        <div class="hero-copy">
+            <h1>Главная</h1>
+        </div>
+
+        <div class="shortcut-grid">
+            <a class="shortcut-card" th:href="@{/products}">
+                <span class="shortcut-title">Товары</span>
+                <span class="shortcut-text">Поиск, остатки, добавление и редактирование.</span>
+            </a>
+
+            <a class="shortcut-card" th:href="@{/partners}">
+                <span class="shortcut-title">Партнеры</span>
+                <span class="shortcut-text">Поставщики и потребители.</span>
+            </a>
+
+            <a class="shortcut-card" th:href="@{/operations}">
+                <span class="shortcut-title">Операции</span>
+                <span class="shortcut-text">Поставки и выдачи по журналу операций.</span>
+            </a>
+
+            <a class="shortcut-card" th:href="@{/places}">
+                <span class="shortcut-title">Места хранения</span>
+                <span class="shortcut-text">Комнаты, полки и доступная вместимость.</span>
+            </a>
+        </div>
+    </section>
+
+    <section class="stats-grid">
+        <article class="card stat-card">
+            <p class="stat-label">Всего товаров</p>
+            <p class="stat-value" th:text="${dashboard.totalProducts}">0</p>
+        </article>
+
+        <article class="card stat-card">
+            <p class="stat-label">Видов товаров</p>
+            <p class="stat-value" th:text="${#maps.size(dashboard.countByType)}">0</p>
+        </article>
+    </section>
+
+    <section class="card">
+        <div class="section-header">
+            <h2>Распределение по видам</h2>
+        </div>
+
+        <div class="summary-list" th:if="${!#maps.isEmpty(dashboard.countByType)}">
+            <div class="summary-row" th:each="entry : ${dashboard.countByType}">
+                <span th:text="${entry.key}">Вид</span>
+                <strong th:text="${entry.value}">0</strong>
+            </div>
+        </div>
+
+        <p class="empty-state" th:if="${#maps.isEmpty(dashboard.countByType)}">
+            Статистика по видам пока недоступна.
+        </p>
+    </section>
+
+    <section class="card">
+        <div class="section-header">
+            <h2>Скоро истекает срок годности</h2>
+        </div>
+
+        <table>
+            <thead>
+            <tr>
+                <th>Наименование</th>
+                <th>Вид</th>
+                <th>Характеристики</th>
+                <th>Остаток</th>
+                <th>Места хранения</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="product : ${dashboard.expiringProducts}">
+                <td th:text="${product.title}">Товар</td>
+                <td th:text="${product.typeTitle}">Вид</td>
+                <td th:text="${product.characteristics}">Характеристики</td>
+                <td th:text="${product.availableAmount}">0</td>
+                <td th:text="${product.places}">-</td>
+            </tr>
+            <tr th:if="${#lists.isEmpty(dashboard.expiringProducts)}">
+                <td colspan="5">Товаров со скорым истечением срока годности нет.</td>
+            </tr>
+            </tbody>
+        </table>
+    </section>
+
+    <section class="card">
+        <div class="section-header">
+            <h2>Последние операции</h2>
+        </div>
+
+        <table>
+            <thead>
+            <tr>
+                <th>Тип</th>
+                <th>Дата и время</th>
+                <th>Партнер</th>
+                <th>Товар</th>
+                <th>Количество</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="operation : ${dashboard.recentOperations}">
+                <td th:text="${operation.kind}">SUPPLY</td>
+                <td th:text="${#temporals.format(operation.time, 'dd.MM.yyyy HH:mm')}">26.04.2026 22:00</td>
+                <td th:text="${operation.partnerName}">Партнер</td>
+                <td th:text="${operation.productTitle}">Товар</td>
+                <td th:text="${operation.amount}">0</td>
+            </tr>
+            <tr th:if="${#lists.isEmpty(dashboard.recentOperations)}">
+                <td colspan="5">Операций пока нет.</td>
+            </tr>
+            </tbody>
+        </table>
+    </section>
+</main>
+
+</body>
+</html>

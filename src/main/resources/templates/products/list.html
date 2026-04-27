@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="ru" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Товары</title>
+    <link rel="stylesheet" th:href="@{/css/app.css}">
+</head>
+<body>
+
+<div th:replace="~{fragments/common :: header('products')}"></div>
+<div th:replace="~{fragments/common :: messages}"></div>
+
+<main class="container">
+    <div class="page-header">
+        <h1>Товары</h1>
+
+        <a class="button primary" th:href="@{/products/new}">
+            Добавить товар
+        </a>
+    </div>
+
+    <form method="get" class="card filter-grid">
+        <label>
+            Наименование
+            <input type="text" name="title" th:value="${title}">
+        </label>
+
+        <label>
+            Вид товара
+            <select name="typeId">
+                <option value="">Все</option>
+
+                <option th:each="typeItem : ${productTypesList}"
+                        th:value="${typeItem.id}"
+                        th:text="${typeItem.title}"
+                        th:selected="${typeId == typeItem.id}">
+                </option>
+            </select>
+        </label>
+
+        <label>
+            Статус хранения
+            <select name="status">
+                <option value="">Все</option>
+
+                <option th:each="statusItem : ${storeStatuses}"
+                        th:value="${statusItem}"
+                        th:text="${statusItem}"
+                        th:selected="${status == statusItem}">
+                </option>
+            </select>
+        </label>
+
+        <label class="checkbox-row">
+            <input type="checkbox"
+                   name="inStockOnly"
+                   value="true"
+                   th:checked="${inStockOnly}">
+            Только в наличии
+        </label>
+
+        <div class="form-actions">
+            <button class="button primary" type="submit">Найти</button>
+            <a class="button" th:href="@{/products}">Сбросить</a>
+        </div>
+    </form>
+
+    <section class="card">
+        <table>
+            <thead>
+            <tr>
+                <th>Наименование</th>
+                <th>Вид</th>
+                <th>Характеристики</th>
+                <th>Остаток</th>
+                <th>Места хранения</th>
+                <th>Действия</th>
+            </tr>
+            </thead>
+
+            <tbody>
+            <tr th:each="product : ${products}">
+                <td th:text="${product.title}"></td>
+                <td th:text="${product.typeTitle}"></td>
+                <td th:text="${product.characteristics}"></td>
+                <td th:text="${product.availableAmount}"></td>
+                <td th:text="${product.places}"></td>
+
+                <td>
+                    <a class="button small"
+                       th:href="@{|/products/${product.id}/edit|}">
+                        Изменить
+                    </a>
+
+                    <form th:action="@{|/products/${product.id}/delete|}"
+                          method="post"
+                          class="inline-form">
+                        <button class="button small danger" type="submit">
+                            Удалить
+                        </button>
+                    </form>
+                </td>
+            </tr>
+
+            <tr th:if="${#lists.isEmpty(products)}">
+                <td colspan="6">
+                    Товары не найдены.
+                </td>
+            </tr>
+            </tbody>
+        </table>
+    </section>
+</main>
+
+</body>
+</html>
