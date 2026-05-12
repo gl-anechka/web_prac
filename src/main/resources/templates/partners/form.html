@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="ru" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title th:text="${pageTitle}">Форма партнера</title>
+    <link rel="stylesheet" th:href="@{/css/app.css}">
+</head>
+<body>
+
+<div th:replace="~{fragments/common :: header('partners')}"></div>
+<div th:replace="~{fragments/common :: messages}"></div>
+
+<main class="container">
+    <div class="page-header">
+        <h1 th:text="${pageTitle}">Форма партнера</h1>
+    </div>
+
+    <form th:action="@{/partners/save}" th:object="${partnerForm}" method="post" class="card form-grid" novalidate>
+        <input type="hidden" th:field="*{id}">
+
+        <label>
+            Тип
+            <select th:field="*{type}">
+                <option value="">Выберите тип</option>
+                <option th:each="item : ${partnerTypes}"
+                        th:value="${item}"
+                        th:text="${@displayValueService.partnerType(item)}">
+                </option>
+            </select>
+            <span class="field-error" th:errors="*{type}"></span>
+        </label>
+
+        <label>
+            Наименование
+            <input type="text" th:field="*{name}">
+            <span class="field-error" th:errors="*{name}"></span>
+        </label>
+
+        <label>
+            Адрес
+            <input type="text" th:field="*{address}">
+            <span class="field-error" th:errors="*{address}"></span>
+        </label>
+
+        <label>
+            Телефон
+            <input type="text" th:field="*{phone}">
+            <span class="field-error" th:errors="*{phone}"></span>
+        </label>
+
+        <label>
+            E-mail
+            <input type="text" th:field="*{email}">
+            <span class="field-error" th:errors="*{email}"></span>
+        </label>
+
+        <div class="form-actions">
+            <button class="button primary" type="submit">Принять</button>
+            <a class="button" th:href="@{/partners}">Отмена</a>
+        </div>
+    </form>
+</main>
+
+</body>
+</html>

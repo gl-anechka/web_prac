@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="ru" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title th:text="${pageTitle}">Форма операции</title>
+    <link rel="stylesheet" th:href="@{/css/app.css}">
+</head>
+<body>
+
+<div th:replace="~{fragments/common :: header('operations')}"></div>
+<div th:replace="~{fragments/common :: messages}"></div>
+
+<main class="container">
+    <div class="page-header">
+        <h1 th:text="${pageTitle}">Форма операции</h1>
+    </div>
+
+    <form th:action="@{/operations/save}" th:object="${operationForm}" method="post" class="card form-grid" novalidate>
+        <input type="hidden" th:field="*{kind}">
+
+        <label>
+            Тип операции
+            <input type="text" th:value="${@displayValueService.operationKind(operationForm.kind)}" readonly>
+        </label>
+
+        <label>
+            <span th:text="${operationForm.kind != null and operationForm.kind.name() == 'SUPPLY' ? 'Поставщик' : 'Получатель'}">Партнер</span>
+            <select th:field="*{partnerId}">
+                <option value="">Выберите партнера</option>
+                <option th:each="partner : ${partnerOptions}"
+                        th:value="${partner.id}"
+                        th:text="${partner.label}">
+                </option>
+            </select>
+            <span class="field-error" th:errors="*{partnerId}"></span>
+        </label>
+
+        <label>
+            Товар
+            <select th:field="*{productId}">
+                <option value="">Выберите товар</option>
+                <option th:each="product : ${productOptions}"
+                        th:value="${product.id}"
+                        th:text="${product.label}">
+                </option>
+            </select>
+            <span class="field-error" th:errors="*{productId}"></span>
+        </label>
+
+        <label>
+            Дата и время
+            <input type="datetime-local" th:field="*{time}">
+            <span class="field-error" th:errors="*{time}"></span>
+        </label>
+
+        <label th:if="${operationForm.kind != null and operationForm.kind.name() == 'SUPPLY'}">
+            Срок годности
+            <input type="datetime-local" th:field="*{expiresAt}">
+            <span class="field-error" th:errors="*{expiresAt}"></span>
+        </label>
+
+        <label>
+            Количество
+            <input type="number" step="0.01" min="0.01" th:field="*{amount}">
+            <span class="field-error" th:errors="*{amount}"></span>
+        </label>
+
+        <div class="form-actions">
+            <button th:if="${operationForm.kind != null and operationForm.kind.name() == 'SUPPLY'}"
+                    class="button"
+                    type="submit"
+                    th:formaction="@{/operations/check-place}">
+                Проверить наличие места
+            </button>
+            <button class="button primary" type="submit">Подтвердить</button>
+            <a class="button" th:href="@{/operations}">Отмена</a>
+        </div>
+    </form>
+</main>
+
+</body>
+</html>

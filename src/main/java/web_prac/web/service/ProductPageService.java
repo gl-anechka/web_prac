@@ -4,6 +4,7 @@ import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import web_prac.DAO.ProductDao;
 import web_prac.model.Product;
 import web_prac.model.ProductType;
 import web_prac.model.StoreStatus;
@@ -14,40 +15,34 @@ import java.util.List;
 
 @Service
 public class ProductPageService {
+    private final ProductDao productDao;
     private final ProductPresentationService productPresentationService;
 
     @PersistenceContext
     private EntityManager entityManager;
 
-    public ProductPageService(ProductPresentationService productPresentationService) {
+    public ProductPageService(ProductDao productDao, ProductPresentationService productPresentationService) {
+        this.productDao = productDao;
         this.productPresentationService = productPresentationService;
     }
 
     @Transactional(readOnly = true)
     public List<ProductRowView> search(
-        String title,
-        Integer typeId,
-        Boolean inStockOnly,
-        StoreStatus status
+            String title,
+            Integer typeId,
+            Integer providerId,
+            Boolean inStockOnly,
+            StoreStatus status,
+            Integer placeId
     ) {
-        String normalizedTitle = normalizeForSearch(title);
-        String jpql = """
-                select distinct p
-                from Product p
-                left join Storehouse s on s.product = p
-                where (:title is null or lower(p.title) like lower(concat('%', :title, '%')))
-                  and (:typeId is null or p.productType.id = :typeId)
-                  and (:status is null or s.status = :status)
-                  and (:inStockOnly = false or s.amount > 0)
-                order by p.title
-                """;
-
-        List<Product> products = entityManager.createQuery(jpql, Product.class)
-                .setParameter("title", normalizedTitle)
-                .setParameter("typeId", typeId)
-                .setParameter("status", status)
-                .setParameter("inStockOnly", Boolean.TRUE.equals(inStockOnly))
-                .getResultList();
+        List<Product> products = productDao.searchProduct(
+                normalize(title),
+                typeId,
+                providerId,
+                inStockOnly,
+                status,
+                placeId
+        );
 
         return productPresentationService.toRows(products);
     }
@@ -72,10 +67,7 @@ public class ProductPageService {
 
     @Transactional
     public void save(ProductForm form) {
-        ProductType type = entityManager.find(
-                ProductType.class,
-                form.getProductTypeId()
-        );
+        ProductType type = entityManager.find(ProductType.class, form.getProductTypeId());
 
         if (type == null) {
             throw new BusinessException("Выбран неизвестный вид товара");
@@ -107,9 +99,16 @@ public class ProductPageService {
     public void delete(Integer id) {
         Product product = entityManager.find(Product.class, id);
 
-        if (product != null) {
-            entityManager.remove(product);
+        if (product == null) {
+            return;
         }
+
+        if (hasReferences(id)) {
+            throw new BusinessException("Нельзя удалить товар, пока он участвует в операциях или хранится на складе");
+        }
+
+        entityManager.remove(product);
+        entityManager.flush();
     }
 
     private String normalize(String value) {
@@ -120,8 +119,19 @@ public class ProductPageService {
         return value.trim();
     }
 
-    private String normalizeForSearch(String value) {
-        String normalized = normalize(value);
-        return normalized == null ? "" : normalized;
+    private boolean hasReferences(Integer productId) {
+        Long count = entityManager.createQuery(
+                """
+                select
+                    (select count(s) from Supply s where s.product.id = :productId) +
+                    (select count(r) from Reception r where r.product.id = :productId) +
+                    (select count(st) from Storehouse st where st.product.id = :productId)
+                """,
+                Long.class
+        )
+                .setParameter("productId", productId)
+                .getSingleResult();
+
+        return count != null && count > 0;
     }
 }

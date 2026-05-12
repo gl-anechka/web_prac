@@ -8,45 +8,19 @@
             <a class="brand" th:href="@{/}">Складской учет</a>
 
             <nav class="main-nav">
-                <a th:href="@{/}"
-                   th:classappend="${active == 'home'} ? 'active'">
-                    Главная
-                </a>
-
-                <a th:href="@{/products}"
-                   th:classappend="${active == 'products'} ? 'active'">
-                    Товары
-                </a>
-
-                <a th:href="@{/partners}"
-                   th:classappend="${active == 'partners'} ? 'active'">
-                    Партнеры
-                </a>
-
-                <a th:href="@{/operations}"
-                   th:classappend="${active == 'operations'} ? 'active'">
-                    Операции
-                </a>
-
-                <a th:href="@{/places}"
-                   th:classappend="${active == 'places'} ? 'active'">
-                    Места хранения
-                </a>
+                <a th:href="@{/}" th:classappend="${active == 'home'} ? 'active'">Главная</a>
+                <a th:href="@{/products}" th:classappend="${active == 'products'} ? 'active'">Товары</a>
+                <a th:href="@{/partners}" th:classappend="${active == 'partners'} ? 'active'">Партнеры</a>
+                <a th:href="@{/operations}" th:classappend="${active == 'operations'} ? 'active'">Операции</a>
+                <a th:href="@{/places}" th:classappend="${active == 'places'} ? 'active'">Места хранения</a>
             </nav>
         </div>
     </div>
 </header>
 
 <div th:fragment="messages" class="container messages">
-    <div class="alert success"
-         th:if="${successMessage}"
-         th:text="${successMessage}">
-    </div>
-
-    <div class="alert error"
-         th:if="${errorMessage}"
-         th:text="${errorMessage}">
-    </div>
+    <div class="alert success" th:if="${successMessage}" th:text="${successMessage}"></div>
+    <div class="alert error" th:if="${errorMessage}" th:text="${errorMessage}"></div>
 </div>
 
 </body>

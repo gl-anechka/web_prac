@@ -13,7 +13,7 @@
 <main class="container home-layout">
     <section class="hero card">
         <div class="hero-copy">
-            <h1>Главная</h1>
+            <h1>Складской учет</h1>
         </div>
 
         <div class="shortcut-grid">
@@ -21,17 +21,14 @@
                 <span class="shortcut-title">Товары</span>
                 <span class="shortcut-text">Поиск, остатки, добавление и редактирование.</span>
             </a>
-
             <a class="shortcut-card" th:href="@{/partners}">
                 <span class="shortcut-title">Партнеры</span>
                 <span class="shortcut-text">Поставщики и потребители.</span>
             </a>
-
             <a class="shortcut-card" th:href="@{/operations}">
                 <span class="shortcut-title">Операции</span>
                 <span class="shortcut-text">Поставки и выдачи по журналу операций.</span>
             </a>
-
             <a class="shortcut-card" th:href="@{/places}">
                 <span class="shortcut-title">Места хранения</span>
                 <span class="shortcut-text">Комнаты, полки и доступная вместимость.</span>
@@ -88,7 +85,7 @@
                 <td th:text="${product.title}">Товар</td>
                 <td th:text="${product.typeTitle}">Вид</td>
                 <td th:text="${product.characteristics}">Характеристики</td>
-                <td th:text="${product.availableAmount}">0</td>
+                <td th:text="${#numbers.formatDecimal(product.availableAmount, 1, 2)}">0</td>
                 <td th:text="${product.places}">-</td>
             </tr>
             <tr th:if="${#lists.isEmpty(dashboard.expiringProducts)}">
@@ -115,11 +112,11 @@
             </thead>
             <tbody>
             <tr th:each="operation : ${dashboard.recentOperations}">
-                <td th:text="${operation.kind}">SUPPLY</td>
+                <td th:text="${@displayValueService.operationKind(operation.kind)}">Поставка</td>
                 <td th:text="${#temporals.format(operation.time, 'dd.MM.yyyy HH:mm')}">26.04.2026 22:00</td>
                 <td th:text="${operation.partnerName}">Партнер</td>
                 <td th:text="${operation.productTitle}">Товар</td>
-                <td th:text="${operation.amount}">0</td>
+                <td th:text="${#numbers.formatDecimal(operation.amount, 1, 2)}">0</td>
             </tr>
             <tr th:if="${#lists.isEmpty(dashboard.recentOperations)}">
                 <td colspan="5">Операций пока нет.</td>

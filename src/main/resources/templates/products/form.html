@@ -18,7 +18,8 @@
     <form th:action="@{/products/save}"
           th:object="${productForm}"
           method="post"
-          class="card form-grid">
+          class="card form-grid"
+          novalidate>
 
         <input type="hidden" th:field="*{id}">
 
@@ -32,13 +33,11 @@
             Вид товара
             <select th:field="*{productTypeId}">
                 <option value="">Выберите вид</option>
-
                 <option th:each="typeItem : ${productTypesList}"
                         th:value="${typeItem.id}"
                         th:text="${typeItem.title}">
                 </option>
             </select>
-
             <span class="field-error" th:errors="*{productTypeId}"></span>
         </label>
 
@@ -46,34 +45,23 @@
             Единица измерения
             <select th:field="*{unit}">
                 <option value="">Выберите единицу</option>
-
                 <option th:each="unitItem : ${units}"
                         th:value="${unitItem}"
-                        th:text="${unitItem}">
+                        th:text="${@displayValueService.unit(unitItem)}">
                 </option>
             </select>
-
             <span class="field-error" th:errors="*{unit}"></span>
         </label>
 
         <label>
             Вес одной единицы, кг
-            <input type="number"
-                   step="0.01"
-                   min="0"
-                   th:field="*{kgPerUnit}">
-
+            <input type="number" step="0.01" min="0" th:field="*{kgPerUnit}">
             <span class="field-error" th:errors="*{kgPerUnit}"></span>
         </label>
 
         <div class="form-actions">
-            <button class="button primary" type="submit">
-                Сохранить
-            </button>
-
-            <a class="button" th:href="@{/products}">
-                Отмена
-            </a>
+            <button class="button primary" type="submit">Принять</button>
+            <a class="button" th:href="@{/products}">Отмена</a>
         </div>
     </form>
 </main>

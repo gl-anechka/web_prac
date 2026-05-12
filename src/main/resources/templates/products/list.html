@@ -15,11 +15,11 @@
         <h1>Товары</h1>
 
         <a class="button primary" th:href="@{/products/new}">
-            Добавить товар
+            Добавить новый товар
         </a>
     </div>
 
-    <form method="get" class="card filter-grid">
+    <form method="get" class="card filter-grid filter-grid-3">
         <label>
             Наименование
             <input type="text" name="title" th:value="${title}">
@@ -29,7 +29,6 @@
             Вид товара
             <select name="typeId">
                 <option value="">Все</option>
-
                 <option th:each="typeItem : ${productTypesList}"
                         th:value="${typeItem.id}"
                         th:text="${typeItem.title}"
@@ -39,23 +38,43 @@
         </label>
 
         <label>
-            Статус хранения
+            Поставщик
+            <select name="providerId">
+                <option value="">Все</option>
+                <option th:each="provider : ${providerOptions}"
+                        th:value="${provider.id}"
+                        th:text="${provider.label}"
+                        th:selected="${providerId == provider.id}">
+                </option>
+            </select>
+        </label>
+
+        <label>
+            Статус
             <select name="status">
                 <option value="">Все</option>
-
                 <option th:each="statusItem : ${storeStatuses}"
                         th:value="${statusItem}"
-                        th:text="${statusItem}"
+                        th:text="${@displayValueService.storeStatus(statusItem)}"
                         th:selected="${status == statusItem}">
                 </option>
             </select>
         </label>
 
+        <label>
+            Место хранения
+            <select name="placeId">
+                <option value="">Все</option>
+                <option th:each="place : ${placeOptions}"
+                        th:value="${place.id}"
+                        th:text="${place.label}"
+                        th:selected="${placeId == place.id}">
+                </option>
+            </select>
+        </label>
+
         <label class="checkbox-row">
-            <input type="checkbox"
-                   name="inStockOnly"
-                   value="true"
-                   th:checked="${inStockOnly}">
+            <input type="checkbox" name="inStockOnly" value="true" th:checked="${inStockOnly}">
             Только в наличии
         </label>
 
@@ -73,7 +92,7 @@
                 <th>Вид</th>
                 <th>Характеристики</th>
                 <th>Остаток</th>
-                <th>Места хранения</th>
+                <th>Место хранения</th>
                 <th>Действия</th>
             </tr>
             </thead>
@@ -83,18 +102,16 @@
                 <td th:text="${product.title}"></td>
                 <td th:text="${product.typeTitle}"></td>
                 <td th:text="${product.characteristics}"></td>
-                <td th:text="${product.availableAmount}"></td>
+                <td th:text="${#numbers.formatDecimal(product.availableAmount, 1, 2)}"></td>
                 <td th:text="${product.places}"></td>
-
-                <td>
-                    <a class="button small"
-                       th:href="@{|/products/${product.id}/edit|}">
+                <td class="table-actions">
+                    <a class="button small" th:href="@{|/products/${product.id}/edit|}">
                         Изменить
                     </a>
-
                     <form th:action="@{|/products/${product.id}/delete|}"
                           method="post"
-                          class="inline-form">
+                          class="inline-form"
+                          onsubmit="return confirm('Удалить товар?');">
                         <button class="button small danger" type="submit">
                             Удалить
                         </button>
@@ -103,9 +120,7 @@
             </tr>
 
             <tr th:if="${#lists.isEmpty(products)}">
-                <td colspan="6">
-                    Товары не найдены.
-                </td>
+                <td colspan="6">Товары не найдены.</td>
             </tr>
             </tbody>
         </table>

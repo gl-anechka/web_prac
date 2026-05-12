@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="ru" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Операции</title>
+    <link rel="stylesheet" th:href="@{/css/app.css}">
+</head>
+<body>
+
+<div th:replace="~{fragments/common :: header('operations')}"></div>
+<div th:replace="~{fragments/common :: messages}"></div>
+
+<main class="container">
+    <div class="page-header page-header-stack">
+        <div>
+            <h1>Операции</h1>
+        </div>
+
+        <div class="action-row">
+            <a class="button primary" th:href="@{/operations/new-supply}">Оформить поставку</a>
+            <a class="button" th:href="@{/operations/new-reception}">Оформить выдачу</a>
+        </div>
+    </div>
+
+    <form method="get" class="card filter-grid filter-grid-3">
+        <label>
+            Тип операции
+            <select name="kind">
+                <option value="">Все</option>
+                <option th:each="item : ${operationKinds}"
+                        th:value="${item}"
+                        th:text="${@displayValueService.operationKind(item)}"
+                        th:selected="${kind == item}">
+                </option>
+            </select>
+        </label>
+
+        <label>
+            Период с
+            <input type="datetime-local" name="from" th:value="${from != null ? #temporals.format(from, 'yyyy-MM-dd''T''HH:mm') : ''}">
+        </label>
+
+        <label>
+            Период по
+            <input type="datetime-local" name="to" th:value="${to != null ? #temporals.format(to, 'yyyy-MM-dd''T''HH:mm') : ''}">
+        </label>
+
+        <label>
+            Партнер
+            <select name="partnerId">
+                <option value="">Все</option>
+                <option th:each="partner : ${partnerOptions}"
+                        th:value="${partner.id}"
+                        th:text="${partner.label}"
+                        th:selected="${partnerId == partner.id}">
+                </option>
+            </select>
+        </label>
+
+        <label>
+            Товар
+            <select name="productId">
+                <option value="">Все</option>
+                <option th:each="product : ${productOptions}"
+                        th:value="${product.id}"
+                        th:text="${product.label}"
+                        th:selected="${productId == product.id}">
+                </option>
+            </select>
+        </label>
+
+        <div class="form-actions">
+            <button class="button primary" type="submit">Найти</button>
+            <a class="button" th:href="@{/operations}">Сбросить</a>
+        </div>
+    </form>
+
+    <section class="card">
+        <table>
+            <thead>
+            <tr>
+                <th>Тип</th>
+                <th>Дата и время</th>
+                <th>Партнер</th>
+                <th>Товар</th>
+                <th>Количество</th>
+                <th>Статус</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="operation : ${operations}">
+                <td th:text="${@displayValueService.operationKind(operation.kind)}"></td>
+                <td th:text="${#temporals.format(operation.time, 'dd.MM.yyyy HH:mm')}"></td>
+                <td th:text="${operation.partnerName}"></td>
+                <td th:text="${operation.productTitle}"></td>
+                <td th:text="${#numbers.formatDecimal(operation.amount, 1, 2)}"></td>
+                <td>
+                    <span th:if="${operation.kind.name() == 'SUPPLY'}">Проведена</span>
+                    <span th:if="${operation.kind.name() == 'RECEPTION'}"
+                          th:text="${operation.completed != null and operation.completed ? 'Выдано' : 'Не завершена'}">
+                    </span>
+                </td>
+            </tr>
+            <tr th:if="${#lists.isEmpty(operations)}">
+                <td colspan="6">Операции не найдены.</td>
+            </tr>
+            </tbody>
+        </table>
+    </section>
+</main>
+
+</body>
+</html>

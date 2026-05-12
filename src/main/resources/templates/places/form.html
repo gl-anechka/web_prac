@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="ru" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title th:text="${pageTitle}">Форма места хранения</title>
+    <link rel="stylesheet" th:href="@{/css/app.css}">
+</head>
+<body>
+
+<div th:replace="~{fragments/common :: header('places')}"></div>
+<div th:replace="~{fragments/common :: messages}"></div>
+
+<main class="container">
+    <div class="page-header">
+        <h1 th:text="${pageTitle}">Форма места хранения</h1>
+    </div>
+
+    <form th:action="@{/places/save}" th:object="${placeForm}" method="post" class="card form-grid" novalidate>
+        <input type="hidden" th:field="*{id}">
+
+        <label>
+            Комната
+            <input type="number" min="1" th:field="*{roomNum}">
+            <span class="field-error" th:errors="*{roomNum}"></span>
+        </label>
+
+        <label>
+            Полка
+            <input type="number" min="1" th:field="*{shelfNum}">
+            <span class="field-error" th:errors="*{shelfNum}"></span>
+        </label>
+
+        <label>
+            Вместимость, кг
+            <input type="number" step="0.01" min="0" th:field="*{kgLimit}">
+            <span class="field-error" th:errors="*{kgLimit}"></span>
+        </label>
+
+        <div class="form-actions">
+            <button class="button primary" type="submit">Принять</button>
+            <a class="button" th:href="@{/places}">Отмена</a>
+        </div>
+    </form>
+</main>
+
+</body>
+</html>

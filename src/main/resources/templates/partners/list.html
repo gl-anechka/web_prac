@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="ru" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Партнеры</title>
+    <link rel="stylesheet" th:href="@{/css/app.css}">
+</head>
+<body>
+
+<div th:replace="~{fragments/common :: header('partners')}"></div>
+<div th:replace="~{fragments/common :: messages}"></div>
+
+<main class="container">
+    <div class="page-header">
+        <h1>Партнеры</h1>
+        <a class="button primary" th:href="@{/partners/new}">
+            Зарегистрировать нового партнера
+        </a>
+    </div>
+
+    <form method="get" class="card filter-grid filter-grid-3">
+        <label>
+            Тип
+            <select name="type">
+                <option value="">Все</option>
+                <option th:value="PROVIDER" th:selected="${type != null and type.name() == 'PROVIDER'}">Поставщик</option>
+                <option th:value="CONSUMER" th:selected="${type != null and type.name() == 'CONSUMER'}">Потребитель</option>
+            </select>
+        </label>
+
+        <label>
+            Наименование
+            <input type="text" name="name" th:value="${name}">
+        </label>
+
+        <label>
+            Адрес
+            <input type="text" name="address" th:value="${address}">
+        </label>
+
+        <label>
+            Телефон
+            <input type="text" name="phone" th:value="${phone}">
+        </label>
+
+        <label>
+            E-mail
+            <input type="text" name="email" th:value="${email}">
+        </label>
+
+        <div class="form-actions">
+            <button class="button primary" type="submit">Найти</button>
+            <a class="button" th:href="@{/partners}">Сбросить</a>
+        </div>
+    </form>
+
+    <section class="card">
+        <table>
+            <thead>
+            <tr>
+                <th>Тип</th>
+                <th>Наименование</th>
+                <th>Адрес</th>
+                <th>Телефон</th>
+                <th>E-mail</th>
+                <th>Действия</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="partner : ${partners}">
+                <td th:text="${@displayValueService.partnerType(partner.type)}"></td>
+                <td th:text="${partner.name}"></td>
+                <td th:text="${partner.address ?: '-'}"></td>
+                <td th:text="${partner.phone ?: '-'}"></td>
+                <td th:text="${partner.email ?: '-'}"></td>
+                <td class="table-actions">
+                    <a class="button small" th:href="@{|/partners/${partner.id}/edit|}">Изменить</a>
+                    <form th:action="@{|/partners/${partner.id}/delete|}"
+                          method="post"
+                          class="inline-form"
+                          onsubmit="return confirm('Удалить партнера?');">
+                        <button class="button small danger" type="submit">Удалить</button>
+                    </form>
+                </td>
+            </tr>
+            <tr th:if="${#lists.isEmpty(partners)}">
+                <td colspan="6">Партнеры не найдены.</td>
+            </tr>
+            </tbody>
+        </table>
+    </section>
+</main>
+
+</body>
+</html>

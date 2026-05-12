@@ -26,6 +26,9 @@ public class OperationForm {
     @DateTimeFormat(pattern = "yyyy-MM-dd'T'HH:mm")
     private LocalDateTime time;
 
+    @DateTimeFormat(pattern = "yyyy-MM-dd'T'HH:mm")
+    private LocalDateTime expiresAt;
+
     @NotNull(message = "Укажите количество")
     @Positive(message = "Количество должно быть больше нуля")
     private Double amount;
